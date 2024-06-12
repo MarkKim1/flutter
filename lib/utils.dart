@@ -2,12 +2,15 @@ import 'package:name_app/category.dart';
 
 class Utils {
   static List<Category> getMockedCategories() {
+    //Trouble shoot categories main screen
     return [ // default information, could be added more entities later on
       Category(
         name: "ZD411",
         describe: "ZD411 Trouble Shoot",
         imgName: "image/ZD411_img.png",
-        subCategories: []
+        subCategories: [
+
+        ]
       ),
       Category(
           name: "ZT411",
@@ -28,8 +31,20 @@ class Utils {
           subCategories: []
       ),
       Category(
+          name: "ZT230",
+          describe: "ZT230 Trouble Shoot",
+          imgName: "image/ZD411_img.png",
+          subCategories: []
+      ),
+      Category(
           name: "computer",
           describe: "Computer Trouble Shoot",
+          imgName: "image/logo.jpg",
+          subCategories: []
+      ),
+      Category(
+          name: "MES",
+          describe: "MES Trouble Shoot",
           imgName: "image/logo.jpg",
           subCategories: []
       ),

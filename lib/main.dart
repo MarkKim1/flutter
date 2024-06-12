@@ -5,6 +5,8 @@ import 'category.dart';
 import 'utils.dart';
 import 'category_name.dart';
 
+List<Category> categories = Utils.getMockedCategories();
+Map<String,List<Category>>? mainCategory;
 void main() {
   runApp(
     MaterialApp(
@@ -18,8 +20,9 @@ void main() {
         '/ZT411': (context) => ZT411(),
         '/ZT410': (context) => ZT410(),
         '/ZT400': (context) => ZT400(),
-        '/computer': (context) => computer(),
-
+        '/computer': (context) => Computer(),
+        '/MES': (context) => MES(),
+        '/EachSubCategoryPage': (context) => EachSubCategoryPage(),
       },
     ),
   );
@@ -119,9 +122,7 @@ class MenuPage extends StatefulWidget {
   @override
   State<MenuPage> createState() => _MenuPageState();
 }
-
 class _MenuPageState extends State<MenuPage> {
-  List<Category> categories = Utils.getMockedCategories();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,14 +141,15 @@ class _MenuPageState extends State<MenuPage> {
             child: Text(
               'trouble shoot categories',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black,fontSize: 20),
+              style: TextStyle(color: Colors.black, fontSize: 20),
             ),
           ),
           Expanded(
             child: ListView.builder(
               itemCount: categories.length,
               itemBuilder: (BuildContext ctx, int index) {
-                return EachCategoryTemplate( // returns the Container
+                return EachCategoryTemplate(
+                    // returns the Container
                     name: categories[index].name,
                     imgName: categories[index].imgName,
                     describe: categories[index].describe);
@@ -160,9 +162,14 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
-class ZD411 extends StatelessWidget {
+class ZD411 extends StatefulWidget {
   @override
-  Widget build(BuildContext context){
+  State<ZD411> createState() => _ZD411State();
+}
+
+class _ZD411State extends State<ZD411> {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('ZD411'),
@@ -175,18 +182,48 @@ class ZD411 extends StatelessWidget {
             child: Text(
               'ZD411 Trouble Shoot',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black,fontSize: 20),
+              style: TextStyle(color: Colors.black, fontSize: 20),
             ),
           ),
-
+          Expanded(
+            child: ListView.separated(
+              itemCount: 5, // need to fix this later
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  leading: const Icon(Icons.list),
+                  title: Text(
+                    "List item $index",
+                  ),
+                  titleAlignment: ListTileTitleAlignment.center,
+                  onTap: () {
+                  },
+                );
+              }, separatorBuilder: (BuildContext context, int index) {
+                return  Divider(
+                    height: 1,
+                  thickness: 2,
+                  color: Colors.blue,
+                  indent: 16,
+                  endIndent: 16,
+                );
+            },
+            ),
+          ),
         ],
       ),
     );
   }
 }
-class ZT411 extends StatelessWidget { // zt411 trouble shoot solutions
+
+class ZT411 extends StatefulWidget {
   @override
-  Widget build(BuildContext context){
+  State<ZT411> createState() => _ZT411State();
+}
+
+class _ZT411State extends State<ZT411> {
+  // zt411 trouble shoot solutions
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('ZT411'),
@@ -199,18 +236,24 @@ class ZT411 extends StatelessWidget { // zt411 trouble shoot solutions
             child: Text(
               'ZT411 Trouble Shoot',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black,fontSize: 20),
+              style: TextStyle(color: Colors.black, fontSize: 20),
             ),
           ),
-
         ],
       ),
     );
   }
 }
-class ZT410 extends StatelessWidget { // zt410 trouble shoot solutions
+
+class ZT410 extends StatefulWidget {
   @override
-  Widget build(BuildContext context){
+  State<ZT410> createState() => _ZT410State();
+}
+
+class _ZT410State extends State<ZT410> {
+  // zt410 trouble shoot solutions
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('ZT410'),
@@ -223,18 +266,24 @@ class ZT410 extends StatelessWidget { // zt410 trouble shoot solutions
             child: Text(
               'ZT410 Trouble Shoot',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black,fontSize: 20),
+              style: TextStyle(color: Colors.black, fontSize: 20),
             ),
           ),
-
         ],
       ),
     );
   }
 }
-class ZT400 extends StatelessWidget { // zt400 trouble shoot solutions
+
+class ZT400 extends StatefulWidget {
   @override
-  Widget build(BuildContext context){
+  State<ZT400> createState() => _ZT400State();
+}
+
+class _ZT400State extends State<ZT400> {
+  // zt400 trouble shoot solutions
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('ZT400'),
@@ -247,21 +296,27 @@ class ZT400 extends StatelessWidget { // zt400 trouble shoot solutions
             child: Text(
               'ZT400 Trouble Shoot',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black,fontSize: 20),
+              style: TextStyle(color: Colors.black, fontSize: 20),
             ),
           ),
-
         ],
       ),
     );
   }
 }
-class computer extends StatelessWidget { // computer solutions
+
+class Computer extends StatefulWidget {
   @override
-  Widget build(BuildContext context){
+  State<Computer> createState() => _ComputerState();
+}
+
+class _ComputerState extends State<Computer> {
+  // computer solutions
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('computer'),
+        title: Text('Computer'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -269,9 +324,9 @@ class computer extends StatelessWidget { // computer solutions
           Padding(
             padding: const EdgeInsets.only(top: 10, bottom: 10),
             child: Text(
-              'computer Trouble Shoot',
+              'Computer Trouble Shoot',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black,fontSize: 20),
+              style: TextStyle(color: Colors.black, fontSize: 20),
             ),
           ),
         ],
@@ -280,4 +335,45 @@ class computer extends StatelessWidget { // computer solutions
   }
 }
 
+class MES extends StatefulWidget {
+  @override
+  State<MES> createState() => _MESState();
+}
 
+class _MESState extends State<MES> {
+  // computer solutions
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('MES'),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 10),
+            child: Text(
+              'MES Trouble Shoot',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black, fontSize: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EachSubCategoryPage extends StatefulWidget {
+  @override
+  State<EachSubCategoryPage> createState() => _EachSubCategoryPageState();
+}
+
+class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    throw UnimplementedError();
+  }
+}
