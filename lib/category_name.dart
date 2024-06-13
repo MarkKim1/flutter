@@ -23,7 +23,6 @@ class CategoryName extends StatelessWidget {
           color: Colors.white,
         ),
       ),
-
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:name_app/main.dart';
 import 'category.dart';
 import 'category_name.dart';
 
@@ -6,13 +7,25 @@ class EachCategoryTemplate extends StatelessWidget {
   final String name;
   final String imgName;
   final String describe;
-  EachCategoryTemplate({required this.name, required this.imgName,required this.describe});
+
+  EachCategoryTemplate(
+      {required this.name,
+        required this.imgName,
+        required this.describe
+      });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/$name');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => eachCategoryView(
+              categoryName: name,
+            )
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.all(20),
@@ -49,7 +62,7 @@ class EachCategoryTemplate extends StatelessWidget {
             ),
             Row(
               children: [
-                CategoryName(name: describe),
+                CategoryName(name: describe), // shows the name of the each Category on picture
               ],
             ),
           ],

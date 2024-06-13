@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
 import 'EachCategoryTemplate.dart';
 import 'category.dart';
 import 'utils.dart';
-import 'category_name.dart';
+import 'package:url_launcher/url_launcher.dart'; // url 가져오는 페키지
 
 List<Category> categories = Utils.getMockedCategories();
-Map<String,List<Category>>? mainCategory;
+Map<String, List<Category>>? mainCategory;
 void main() {
   runApp(
     MaterialApp(
@@ -16,13 +15,6 @@ void main() {
         '/': (context) => MainPage(),
         '/setting': (context) => SettingPage(),
         '/menu': (context) => MenuPage(),
-        '/ZD411': (context) => ZD411(),
-        '/ZT411': (context) => ZT411(),
-        '/ZT410': (context) => ZT410(),
-        '/ZT400': (context) => ZT400(),
-        '/computer': (context) => Computer(),
-        '/MES': (context) => MES(),
-        '/EachSubCategoryPage': (context) => EachSubCategoryPage(),
       },
     ),
   );
@@ -122,6 +114,7 @@ class MenuPage extends StatefulWidget {
   @override
   State<MenuPage> createState() => _MenuPageState();
 }
+
 class _MenuPageState extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
@@ -162,201 +155,68 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
-class ZD411 extends StatefulWidget {
+class eachCategoryView extends StatefulWidget {
+  // 메뉴 화면 클릭하면 나오는 화면
+  final String categoryName;
+
+  eachCategoryView({required this.categoryName});
   @override
-  State<ZD411> createState() => _ZD411State();
+  State<eachCategoryView> createState() => _eachCategoryViewState();
 }
 
-class _ZD411State extends State<ZD411> {
+class _eachCategoryViewState extends State<eachCategoryView> {
+  late int mainIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    mainIndex =
+        categories.indexWhere((item) => item.name == widget.categoryName);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ZD411'),
+        title: Text(categories[mainIndex].describe),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'ZD411 Trouble Shoot',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
-            ),
           ),
           Expanded(
             child: ListView.separated(
-              itemCount: 5, // need to fix this later
+              itemCount: categories[mainIndex].subCategories.length,
               itemBuilder: (BuildContext context, int index) {
                 return ListTile(
                   leading: const Icon(Icons.list),
                   title: Text(
-                    "List item $index",
+                    categories[mainIndex].subCategories[index],
                   ),
                   titleAlignment: ListTileTitleAlignment.center,
                   onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EachSubCategoryPage(
+                            clickedSubCategory:
+                                categories[mainIndex].subCategories[index]),
+                      ),
+                    );
                   },
                 );
-              }, separatorBuilder: (BuildContext context, int index) {
-                return  Divider(
-                    height: 1,
+              },
+              separatorBuilder: (BuildContext context, int index) {
+                return Divider(
+                  height: 1,
                   thickness: 2,
                   color: Colors.blue,
                   indent: 16,
                   endIndent: 16,
                 );
-            },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ZT411 extends StatefulWidget {
-  @override
-  State<ZT411> createState() => _ZT411State();
-}
-
-class _ZT411State extends State<ZT411> {
-  // zt411 trouble shoot solutions
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('ZT411'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'ZT411 Trouble Shoot',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ZT410 extends StatefulWidget {
-  @override
-  State<ZT410> createState() => _ZT410State();
-}
-
-class _ZT410State extends State<ZT410> {
-  // zt410 trouble shoot solutions
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('ZT410'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'ZT410 Trouble Shoot',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ZT400 extends StatefulWidget {
-  @override
-  State<ZT400> createState() => _ZT400State();
-}
-
-class _ZT400State extends State<ZT400> {
-  // zt400 trouble shoot solutions
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('ZT400'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'ZT400 Trouble Shoot',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class Computer extends StatefulWidget {
-  @override
-  State<Computer> createState() => _ComputerState();
-}
-
-class _ComputerState extends State<Computer> {
-  // computer solutions
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Computer'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'Computer Trouble Shoot',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class MES extends StatefulWidget {
-  @override
-  State<MES> createState() => _MESState();
-}
-
-class _MESState extends State<MES> {
-  // computer solutions
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('MES'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'MES Trouble Shoot',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
+              },
             ),
           ),
         ],
@@ -366,14 +226,96 @@ class _MESState extends State<MES> {
 }
 
 class EachSubCategoryPage extends StatefulWidget {
+  // 카테고리 클릭했을때 나오는 화면
+  final String clickedSubCategory;
+
+  EachSubCategoryPage({required this.clickedSubCategory});
+
   @override
   State<EachSubCategoryPage> createState() => _EachSubCategoryPageState();
 }
 
 class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
+  final List<Map<String, String>> errorSolutionList = [
+    {
+      "error": "Ribbon Out Error",
+      "solution": "watch a video",
+      "videoUrl": "https://www.youtube.com/watch?v=Hu5Sf5cW_Ws"
+    },
+    {
+      "error": "123 2",
+      "solution": "Solution 2",
+      "videoUrl": "https://www.youtube.com/watch?v=example2"
+    },
+    // Add more errors and solutions as needed
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.clickedSubCategory)),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: errorSolutionList.map((item) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Table(
+                    border: TableBorder.all(),
+                    children: [
+                      TableRow(children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Error',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Solution',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ]),
+                      TableRow(children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(item["error"]!),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(item["solution"]!),
+                        ),
+                      ]),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () {
+                      final uri = Uri.parse(item["videoUrl"]!);
+                      _launchURL(uri);
+                    },
+                    child: Text('Watch Video'),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _launchURL(Uri url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 }
