@@ -21,7 +21,7 @@ class EachCategoryTemplate extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => eachCategoryView(
+            builder: (context) => EachCategoryView(
               categoryName: name,
             )
           ),

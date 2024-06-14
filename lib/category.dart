@@ -1,12 +1,10 @@
-import 'dart:ui';
-
 class Category {
   String name;
   String? troubleShootName;
   String describe;
   String imgName;
   List<String> subCategories;
-  Map<String, String>? troubleShootDescribe;
+  List<Map<String, String>>? troubleShootDescribe;
 
   Category({
     required this.name,
@@ -26,7 +24,7 @@ class Category {
       subCategories: List<String>.from(map['subCategories'] ?? []),
       troubleShootName: map['troubleShootName'],
       troubleShootDescribe: map['troubleShootDescribe'] != null
-          ? Map<String, String>.from(map['troubleShootDescribe'])
+          ? (map['troubleShootDescribe'] as List).map((item) => Map<String, String>.from(item)).toList()
           : null,
     );
   }

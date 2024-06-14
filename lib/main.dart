@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'EachCategoryTemplate.dart';
 import 'category.dart';
 import 'utils.dart';
-import 'package:url_launcher/url_launcher.dart'; // url 가져오는 페키지
+import 'package:url_launcher/url_launcher.dart';
 
 List<Category> categories = Utils.getMockedCategories();
-Map<String, List<Category>>? mainCategory;
+
 void main() {
   runApp(
     MaterialApp(
@@ -26,51 +26,38 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  String ImgLink = "image/logo.jpg";
+  String imgLink = "image/logo.jpg";
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SafeArea(
-        // Wrap Scaffold with SafeArea
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.white,
             centerTitle: true,
-            leading: GestureDetector(
-              onTap: () {
+            leading: IconButton(
+              icon: Icon(Icons.menu, size: 35),
+              tooltip: '메뉴화면',
+              onPressed: () {
                 Navigator.pushNamed(context, '/menu');
               },
-              child: IconButton(
-                onPressed: null,
-                icon: Icon(
-                  Icons.menu,
-                  size: 35,
-                ),
-                tooltip: '메뉴화면',
-              ),
             ),
             actions: [
-              GestureDetector(
-                onTap: () {
+              IconButton(
+                icon: Icon(Icons.settings, size: 35),
+                tooltip: '세팅 화면',
+                onPressed: () {
                   Navigator.pushNamed(context, '/setting');
                 },
-                child: IconButton(
-                  onPressed: null,
-                  icon: Icon(
-                    Icons.settings,
-                    size: 35,
-                  ),
-                  tooltip: '세팅 화면',
-                ),
               ),
             ],
             flexibleSpace: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.network(
-                  ImgLink,
+                  imgLink,
                   height: 50,
                 ),
                 SizedBox(width: 10),
@@ -80,7 +67,7 @@ class _MainPageState extends State<MainPage> {
                     color: Colors.black,
                     fontSize: 15,
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -91,12 +78,7 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-class SettingPage extends StatefulWidget {
-  @override
-  State<SettingPage> createState() => _SettingPageState();
-}
-
-class _SettingPageState extends State<SettingPage> {
+class SettingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,12 +92,7 @@ class _SettingPageState extends State<SettingPage> {
   }
 }
 
-class MenuPage extends StatefulWidget {
-  @override
-  State<MenuPage> createState() => _MenuPageState();
-}
-
-class _MenuPageState extends State<MenuPage> {
+class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +109,7 @@ class _MenuPageState extends State<MenuPage> {
           Padding(
             padding: const EdgeInsets.only(top: 10, bottom: 10),
             child: Text(
-              'trouble shoot categories',
+              'Trouble Shoot Categories',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black, fontSize: 20),
             ),
@@ -142,29 +119,28 @@ class _MenuPageState extends State<MenuPage> {
               itemCount: categories.length,
               itemBuilder: (BuildContext ctx, int index) {
                 return EachCategoryTemplate(
-                    // returns the Container
-                    name: categories[index].name,
-                    imgName: categories[index].imgName,
-                    describe: categories[index].describe);
+                  name: categories[index].name,
+                  imgName: categories[index].imgName,
+                  describe: categories[index].describe,
+                );
               },
             ),
-          )
+          ),
         ],
       ),
     );
   }
 }
 
-class eachCategoryView extends StatefulWidget {
-  // 메뉴 화면 클릭하면 나오는 화면
+class EachCategoryView extends StatefulWidget {
   final String categoryName;
 
-  eachCategoryView({required this.categoryName});
+  EachCategoryView({required this.categoryName});
   @override
-  State<eachCategoryView> createState() => _eachCategoryViewState();
+  State<EachCategoryView> createState() => _EachCategoryViewState();
 }
 
-class _eachCategoryViewState extends State<eachCategoryView> {
+class _EachCategoryViewState extends State<EachCategoryView> {
   late int mainIndex;
 
   @override
@@ -172,6 +148,7 @@ class _eachCategoryViewState extends State<eachCategoryView> {
     super.initState();
     mainIndex =
         categories.indexWhere((item) => item.name == widget.categoryName);
+
   }
 
   @override
@@ -192,17 +169,17 @@ class _eachCategoryViewState extends State<eachCategoryView> {
               itemBuilder: (BuildContext context, int index) {
                 return ListTile(
                   leading: const Icon(Icons.list),
-                  title: Text(
-                    categories[mainIndex].subCategories[index],
+                  title: Text(categories[mainIndex].subCategories[index],
+                    style: TextStyle(fontSize: 20),
                   ),
-                  titleAlignment: ListTileTitleAlignment.center,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => EachSubCategoryPage(
-                            clickedSubCategory:
-                                categories[mainIndex].subCategories[index]),
+                          clickedSubCategory:
+                              categories[mainIndex].subCategories[index],
+                        ),
                       ),
                     );
                   },
@@ -210,7 +187,7 @@ class _eachCategoryViewState extends State<eachCategoryView> {
               },
               separatorBuilder: (BuildContext context, int index) {
                 return Divider(
-                  height: 1,
+                  height: 20,
                   thickness: 2,
                   color: Colors.blue,
                   indent: 16,
@@ -226,7 +203,6 @@ class _eachCategoryViewState extends State<eachCategoryView> {
 }
 
 class EachSubCategoryPage extends StatefulWidget {
-  // 카테고리 클릭했을때 나오는 화면
   final String clickedSubCategory;
 
   EachSubCategoryPage({required this.clickedSubCategory});
@@ -236,19 +212,18 @@ class EachSubCategoryPage extends StatefulWidget {
 }
 
 class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
-  final List<Map<String, String>> errorSolutionList = [
-    {
-      "error": "Ribbon Out Error",
-      "solution": "watch a video",
-      "videoUrl": "https://www.youtube.com/watch?v=Hu5Sf5cW_Ws"
-    },
-    {
-      "error": "123 2",
-      "solution": "Solution 2",
-      "videoUrl": "https://www.youtube.com/watch?v=example2"
-    },
-    // Add more errors and solutions as needed
-  ];
+  late List<Map<String, String>> filteredErrorSolutionList;
+
+  @override
+  void initState() {
+    super.initState();
+    int index = categories.indexWhere(
+            (item) => item.subCategories.contains(widget.clickedSubCategory));
+    filteredErrorSolutionList = categories[index]
+        .troubleShootDescribe!
+        .where((item) => item["error"] == widget.clickedSubCategory)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +232,7 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
-          children: errorSolutionList.map((item) {
+          children: filteredErrorSolutionList.map((item) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: Column(
@@ -295,12 +270,26 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
                     ],
                   ),
                   SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () {
-                      final uri = Uri.parse(item["videoUrl"]!);
-                      _launchURL(uri);
-                    },
-                    child: Text('Watch Video'),
+                  if (item["videoUrl"]!.isNotEmpty)
+                  Container(
+                    width: double.infinity, // Make the container as wide as the parent
+                    child: TextButton(
+                      onPressed: () {
+                        final uri = Uri.parse(item["videoUrl"]!);
+                        _launchURL(uri);
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16.0), // Add vertical padding
+                        backgroundColor: Colors.blue, // Set button background color
+                      ),
+                      child: Text(
+                        'Watch Video',
+                        style: TextStyle(
+                          color: Colors.white, // Set text color
+                          fontSize: 16.0, // Set text size
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -319,3 +308,5 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
     }
   }
 }
+
+
