@@ -5,6 +5,15 @@ import 'utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 List<Category> categories = Utils.getMockedCategories();
+List<String> searchTerms = [
+  'ZD411: When Label is Not Printing Properly',
+  'ZD411: How to Change the darkness of printer',
+  'ZD411: How to Perform a Manual Width Adjustment',
+  'ZD411: How to Factory reset the ZD411',
+  'ZD411: Printer Setup',
+  'ZD411: How to Replace the PrintHead'
+];
+List<String> recentlySearched = [];
 
 void main() {
   runApp(
@@ -71,9 +80,125 @@ class _MainPageState extends State<MainPage> {
               ],
             ),
           ),
-          body: Center(),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: GestureDetector(
+                  onTap: () {
+                    showSearch(
+                      context: context,
+                      delegate: CustomSearchDelegate(),
+                    );
+                  },
+                  child: Container(
+                    height: 40,
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(24.0)
+                    ),
+                    child: Row(
+                        children: <Widget> [
+                          Icon(Icons.search, color: Colors.grey),
+                          SizedBox(width: 8),
+                          Text(
+                            'Search For Troubleshoot...',
+                            style: TextStyle(color: Colors.grey),
+                          )
+                        ]
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
         ),
       ),
+    );
+  }
+}
+
+class CustomSearchDelegate extends SearchDelegate<String> {
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    List<String> matchQuery = [];
+    for (var term in searchTerms) {
+      if (term.toLowerCase().contains(query.toLowerCase())) {
+        matchQuery.add(term);
+      }
+    }
+    return ListView.builder(
+      itemCount: matchQuery.length,
+      itemBuilder: (context, index) {
+        var result = matchQuery[index];
+        return ListTile(
+          onTap: () {
+            recentlySearched.add(result);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EachSubCategoryPage(
+                  clickedSubCategory: result,
+                ),
+              ),
+            );
+          },
+          title: Text(result),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return ListView.builder(
+      itemCount: recentlySearched.length,
+      itemBuilder: (context, index) {
+        var result = recentlySearched[index];
+        return ListTile(
+          title: Text(result),
+          trailing: IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              recentlySearched.removeAt(index);
+            },
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EachSubCategoryPage(
+                  clickedSubCategory: result,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -148,7 +273,6 @@ class _EachCategoryViewState extends State<EachCategoryView> {
     super.initState();
     mainIndex =
         categories.indexWhere((item) => item.name == widget.categoryName);
-
   }
 
   @override
@@ -169,7 +293,9 @@ class _EachCategoryViewState extends State<EachCategoryView> {
               itemBuilder: (BuildContext context, int index) {
                 return ListTile(
                   leading: const Icon(Icons.list),
-                  title: Text(categories[mainIndex].subCategories[index],
+                  title: Text(
+                    getStringAfterFirstSpace(
+                        categories[mainIndex].subCategories[index]),
                     style: TextStyle(fontSize: 20),
                   ),
                   onTap: () {
@@ -218,7 +344,7 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
   void initState() {
     super.initState();
     int index = categories.indexWhere(
-            (item) => item.subCategories.contains(widget.clickedSubCategory));
+        (item) => item.subCategories.contains(widget.clickedSubCategory));
     filteredErrorSolutionList = categories[index]
         .troubleShootDescribe!
         .where((item) => item["error"] == widget.clickedSubCategory)
@@ -260,7 +386,8 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
                       TableRow(children: [
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(item["error"]!),
+                          child:
+                              Text(getStringAfterFirstSpace(item["error"]!)),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -271,26 +398,29 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
                   ),
                   SizedBox(height: 10),
                   if (item["videoUrl"]!.isNotEmpty)
-                  Container(
-                    width: double.infinity, // Make the container as wide as the parent
-                    child: TextButton(
-                      onPressed: () {
-                        final uri = Uri.parse(item["videoUrl"]!);
-                        _launchURL(uri);
-                      },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16.0), // Add vertical padding
-                        backgroundColor: Colors.blue, // Set button background color
-                      ),
-                      child: Text(
-                        'Watch Video',
-                        style: TextStyle(
-                          color: Colors.white, // Set text color
-                          fontSize: 16.0, // Set text size
+                    Container(
+                      width: double
+                          .infinity, // Make the container as wide as the parent
+                      child: TextButton(
+                        onPressed: () {
+                          final uri = Uri.parse(item["videoUrl"]!);
+                          _launchURL(uri);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 16.0), // Add vertical padding
+                          backgroundColor:
+                              Colors.blue, // Set button background color
+                        ),
+                        child: Text(
+                          'Watch Video',
+                          style: TextStyle(
+                            color: Colors.white, // Set text color
+                            fontSize: 16.0, // Set text size
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             );
@@ -309,4 +439,16 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
   }
 }
 
+String getStringAfterFirstSpace(String key) {
+  String value = key;
 
+  //split the string by spaces
+  List<String> parts = value.split(' ');
+
+  //check if there are more than one part
+  if (parts.length > 1) {
+    return parts.sublist(1).join(' ');
+  } else {
+    return "";
+  }
+}
