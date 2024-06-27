@@ -1,32 +1,248 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:name_app/searchBar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'EachCategoryTemplate.dart';
-import 'category.dart';
 import 'utils.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-List<Category> categories = Utils.getMockedCategories();
-List<String> searchTerms = [
-  'ZD411: When Label is Not Printing Properly',
-  'ZD411: How to Change the darkness of printer',
-  'ZD411: How to Perform a Manual Width Adjustment',
-  'ZD411: How to Factory reset the ZD411',
-  'ZD411: Printer Setup',
-  'ZD411: How to Replace the PrintHead'
-];
-List<String> recentlySearched = [];
+var categories = Utils.getMockedCategories();
+var searchTerms = Utils.searchTerms;
+List<String> favorite = [];
 
-void main() {
+void main() async {
+
+
+
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => MainPage(),
+        '/': (context) => Login(),
         '/setting': (context) => SettingPage(),
         '/menu': (context) => MenuPage(),
       },
     ),
   );
+}
+
+class SplashScreen extends StatefulWidget {
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+
+  void _checkLoginStatus() async {
+    final GlobalKey<_SplashScreenState> myWidgetKey = GlobalKey();
+    final context = myWidgetKey.currentContext;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (context != null && context.mounted) {
+      if (isLoggedIn) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MainPage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Login()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class Login extends StatefulWidget {
+  const Login({Key? key}) : super(key: key);
+
+  @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController idController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+
+  Color _idLabelColor = Colors.grey;
+  Color _passwordLabelColor = Colors.grey;
+
+  var idFocusBorder = BorderSide(color: Colors.blue, width: 2.0);
+  var passwordFocusBorder = BorderSide(color: Colors.blue, width: 2.0);
+
+  // Predefined user IDs and passwords
+  final Map<String, String> users = {
+    'user1': 'password1',
+    'user2': 'password2',
+    'admin': 'admin123',
+  };
+
+  @override
+  void dispose() {
+    idController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _validateFields() async {
+    setState(() {
+      _idLabelColor = idFocusBorder.color == Colors.red && _idLabelColor == Colors.red ? Colors.red : Colors.blue;
+      _passwordLabelColor = passwordFocusBorder.color == Colors.red && _idLabelColor == Colors.red ? Colors.red : Colors.blue;
+    });
+
+
+    WidgetsFlutterBinding.ensureInitialized();
+
+    await Supabase.initialize(url: 'https://xvwluwcyvwuifqlaoovd.supabase.co',
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2d2x1d2N5dnd1aWZxbGFvb3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MjgzNTIsImV4cCI6MjAzNTAwNDM1Mn0.CDgMmdvrkOsiKnib_VPymR4AKjs;DdnXlzTF7-28b2jU'
+    );
+
+    final user_info = await Supabase.instance.client.from('user_information').select();
+    
+
+    if (_formKey.currentState!.validate()) {
+      String id = idController.text;
+      String password = passwordController.text;
+
+      if (users.containsKey(id) && users[id] == password) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MainPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid ID or Password')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in the required fields')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Login Page'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: TextFormField(
+                  controller: idController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: idFocusBorder,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    labelText: "ID",
+                    labelStyle: TextStyle(color: Colors.grey),
+                    floatingLabelStyle: TextStyle(color: _idLabelColor),
+                  ),
+                  style: TextStyle(color: Colors.black), // Default text color
+                  onTap: () => _selectAllText(idController),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      setState(() {
+                        _idLabelColor = Colors.red;
+                      });
+                      return 'Please enter your ID';
+                    }
+                    return null;
+                  },
+                  cursorColor: Colors.blue,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: TextFormField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: passwordFocusBorder,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    labelText: "Password",
+                    labelStyle: TextStyle(color: Colors.grey),
+                    floatingLabelStyle: TextStyle(color: _passwordLabelColor),
+                  ),
+                  style: TextStyle(color: Colors.black), // Default text color
+                  onTap: () => _selectAllText(passwordController),
+                  onFieldSubmitted: (value) => _validateFields(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      setState(() {
+
+                        _passwordLabelColor = Colors.red;
+                      });
+                      return 'Please enter your password';
+                    }
+                    return null;
+                  },
+                  cursorColor: Colors.blue, // Cursor color
+                  //onFieldSubmitted: (value) => _validateFields,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: Center(
+                  child: ElevatedButton(
+                    onPressed: _validateFields,
+                    child: const Text('Submit'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _selectAllText(TextEditingController controller) {
+    controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.text.length);
+  }
 }
 
 class MainPage extends StatefulWidget {
@@ -35,14 +251,11 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  String imgLink = "image/logo.jpg";
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SafeArea(
-        child: Scaffold(
+      home: Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.white,
             centerTitle: true,
@@ -65,18 +278,10 @@ class _MainPageState extends State<MainPage> {
             flexibleSpace: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(
-                  imgLink,
-                  height: 50,
-                ),
-                SizedBox(width: 10),
-                Text(
-                  'Trouble Shoot Manual',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 15,
-                  ),
-                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 30),
+                  child: loadImage('assets/logo.jpg'),
+                )
               ],
             ),
           ),
@@ -84,43 +289,18 @@ class _MainPageState extends State<MainPage> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: GestureDetector(
-                  onTap: () {
-                    showSearch(
-                      context: context,
-                      delegate: CustomSearchDelegate(),
-                    );
-                  },
-                  child: Container(
-                    height: 40,
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(24.0)
-                    ),
-                    child: Row(
-                        children: <Widget> [
-                          Icon(Icons.search, color: Colors.grey),
-                          SizedBox(width: 8),
-                          Text(
-                            'Search For Troubleshoot...',
-                            style: TextStyle(color: Colors.grey),
-                          )
-                        ]
-                    ),
-                  ),
-                ),
+                child: searchBarDesign(context),
               ),
+              Container(
+                alignment: Alignment.center,
+              )
             ],
-          )
-        ),
-      ),
+          )),
     );
   }
 }
 
 class CustomSearchDelegate extends SearchDelegate<String> {
-
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
@@ -128,6 +308,7 @@ class CustomSearchDelegate extends SearchDelegate<String> {
         icon: const Icon(Icons.clear),
         onPressed: () {
           query = '';
+          showSuggestions(context);
         },
       ),
     ];
@@ -145,65 +326,102 @@ class CustomSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    List<String> matchQuery = [];
-    for (var term in searchTerms) {
-      if (term.toLowerCase().contains(query.toLowerCase())) {
-        matchQuery.add(term);
-      }
+    return Container();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.trim().isEmpty) {
+      return Container(); // Return an empty container if the query is empty or consists only of whitespace
     }
+
+    final queryWords =
+    query.toLowerCase().split(' ').where((word) => word.isNotEmpty).toSet();
+
+    final matchQuery = searchTerms.where((term) {
+      final lowerTerm = term.toLowerCase();
+      return queryWords.every((word) => lowerTerm.contains(word));
+    }).toList();
+
     return ListView.builder(
       itemCount: matchQuery.length,
       itemBuilder: (context, index) {
         var result = matchQuery[index];
         return ListTile(
-          onTap: () {
-            recentlySearched.add(result);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EachSubCategoryPage(
-                  clickedSubCategory: result,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EachSubCategoryPage(
+                    clickedSubCategory: result,
+                  ),
                 ),
-              ),
-            );
-          },
-          title: Text(result),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    return ListView.builder(
-      itemCount: recentlySearched.length,
-      itemBuilder: (context, index) {
-        var result = recentlySearched[index];
-        return ListTile(
-          title: Text(result),
-          trailing: IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              recentlySearched.removeAt(index);
+              );
             },
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EachSubCategoryPage(
-                  clickedSubCategory: result,
-                ),
+            title: RichText(
+              text: TextSpan(
+                text: '',
+                children: _highlightOccurrences(result, queryWords),
+                style: TextStyle(color: Colors.black),
               ),
-            );
-          },
-        );
+            ));
       },
     );
   }
 }
 
-class SettingPage extends StatelessWidget {
+/*
+  The TextSpan widget in flutter allows you to style a paragraph of mixed-style text.
+  It displays text that uses multiple styles. The Text may break across multiple lines or might appear
+  all on the same line depending on layout constraints
+*/
+
+List<TextSpan> _highlightOccurrences(String result, Set<String> queryWords) {
+  final spans = <TextSpan>[];
+  final lowerCaseResult = result.toLowerCase();
+
+  int start = 0;
+
+  while (start < result.length) {
+    final matches = queryWords
+        .map((word) {
+      final index = lowerCaseResult.indexOf(word, start);
+      return index == -1 ? null : MapEntry(index, word.length);
+    })
+        .where((entry) => entry != null)
+        .cast<MapEntry<int, int>>()
+        .toList();
+
+    if (matches.isEmpty) {
+      spans.add(TextSpan(text: result.substring(start)));
+      break;
+    }
+
+    matches.sort((a, b) => a.key.compareTo(b.key));
+    final firstMatch = matches.first;
+
+    if (firstMatch.key > start) {
+      spans.add(TextSpan(text: result.substring(start, firstMatch.key)));
+    }
+
+    spans.add(TextSpan(
+      text: result.substring(firstMatch.key, firstMatch.key + firstMatch.value),
+      style: const TextStyle(
+          backgroundColor: Colors.yellow, fontWeight: FontWeight.bold),
+    ));
+
+    start = firstMatch.key + firstMatch.value;
+  }
+
+  return spans;
+}
+
+class SettingPage extends StatefulWidget {
+  @override
+  State<SettingPage> createState() => _SettingPageState();
+}
+
+class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,11 +435,15 @@ class SettingPage extends StatelessWidget {
   }
 }
 
-class MenuPage extends StatelessWidget {
+class MenuPage extends StatefulWidget {
+  @override
+  State<MenuPage> createState() => _MenuPageState();
+}
+
+class _MenuPageState extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(),
       appBar: AppBar(
         title: const Text('Menu'),
         leading: BackButton(onPressed: () {
@@ -232,12 +454,8 @@ class MenuPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(
-              'Trouble Shoot Categories',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black, fontSize: 20),
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            child: searchBarDesign(context),
           ),
           Expanded(
             child: ListView.builder(
@@ -245,7 +463,7 @@ class MenuPage extends StatelessWidget {
               itemBuilder: (BuildContext ctx, int index) {
                 return EachCategoryTemplate(
                   name: categories[index].name,
-                  imgName: categories[index].imgName,
+                  //imgName: categories[index].imgName,
                   describe: categories[index].describe,
                 );
               },
@@ -261,6 +479,7 @@ class EachCategoryView extends StatefulWidget {
   final String categoryName;
 
   EachCategoryView({required this.categoryName});
+
   @override
   State<EachCategoryView> createState() => _EachCategoryViewState();
 }
@@ -285,7 +504,8 @@ class _EachCategoryViewState extends State<EachCategoryView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            child: searchBarDesign(context),
           ),
           Expanded(
             child: ListView.separated(
@@ -304,7 +524,7 @@ class _EachCategoryViewState extends State<EachCategoryView> {
                       MaterialPageRoute(
                         builder: (context) => EachSubCategoryPage(
                           clickedSubCategory:
-                              categories[mainIndex].subCategories[index],
+                          categories[mainIndex].subCategories[index],
                         ),
                       ),
                     );
@@ -344,87 +564,120 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
   void initState() {
     super.initState();
     int index = categories.indexWhere(
-        (item) => item.subCategories.contains(widget.clickedSubCategory));
+            (item) => item.subCategories.contains(widget.clickedSubCategory));
     filteredErrorSolutionList = categories[index]
         .troubleShootDescribe!
         .where((item) => item["error"] == widget.clickedSubCategory)
         .toList();
   }
 
+  bool addedToFavorite = false;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.clickedSubCategory)),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: filteredErrorSolutionList.map((item) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Table(
-                    border: TableBorder.all(),
-                    children: [
-                      TableRow(children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Error',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.clickedSubCategory.split(' ')[0]),
+          centerTitle: true,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    addedToFavorite = !addedToFavorite;
+                  });
+                  if (addedToFavorite == true) {
+                    favorite.add(widget.clickedSubCategory);
+                    debugPrint('added to list');
+                  } else {
+                    favorite.remove(widget.clickedSubCategory);
+                    debugPrint('removed from list');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    iconColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(3))),
+                child: Icon((addedToFavorite == true)
+                    ? Icons.favorite
+                    : Icons.favorite_outline),
+              ),
+            )
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            children: filteredErrorSolutionList.map((item) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Table(
+                      border: TableBorder.all(),
+                      children: [
+                        TableRow(children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'Error',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Solution',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'Solution',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                      ]),
-                      TableRow(children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child:
-                              Text(getStringAfterFirstSpace(item["error"]!)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(item["solution"]!),
-                        ),
-                      ]),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  if (item["videoUrl"]!.isNotEmpty)
-                    Container(
-                      width: double
-                          .infinity, // Make the container as wide as the parent
-                      child: TextButton(
-                        onPressed: () {
-                          final uri = Uri.parse(item["videoUrl"]!);
-                          _launchURL(uri);
-                        },
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 16.0), // Add vertical padding
-                          backgroundColor:
-                              Colors.blue, // Set button background color
-                        ),
-                        child: Text(
-                          'Watch Video',
-                          style: TextStyle(
-                            color: Colors.white, // Set text color
-                            fontSize: 16.0, // Set text size
+                        ]),
+                        TableRow(children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child:
+                            Text(getStringAfterFirstSpace(item["error"]!)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(item["solution"]!),
+                          ),
+                        ]),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    if (item["videoUrl"]!.isNotEmpty)
+                      SizedBox(
+                        width: double
+                            .infinity, // Make the container as wide as the parent
+                        child: TextButton(
+                          onPressed: () {
+                            final uri = Uri.parse(item["videoUrl"]!);
+                            _launchURL(uri);
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                                vertical: 16.0), // Add vertical padding
+                            backgroundColor:
+                            Colors.blue, // Set button background color
+                          ),
+                          child: Text(
+                            'Watch Video',
+                            style: TextStyle(
+                              color: Colors.white, // Set text color
+                              fontSize: 16.0, // Set text size
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            );
-          }).toList(),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
