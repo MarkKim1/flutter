@@ -6,11 +6,12 @@ import 'EachCategoryTemplate.dart';
 import 'utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'chat.dart';
 var categories = Utils.getMockedCategories();
 var searchTerms = Utils.searchTerms;
 
 List<String> favorite = [];
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -297,8 +298,8 @@ class _MainPageState extends State<MainPage> {
                   padding: const EdgeInsets.all(10.0),
                   child: searchBarDesign(context),
                 ),
-                Container(
-                  alignment: Alignment.center,
+                Expanded(
+                  child: ChatPage(),
                 )
               ],
             ),
