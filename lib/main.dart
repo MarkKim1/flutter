@@ -9,11 +9,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 var categories = Utils.getMockedCategories();
 var searchTerms = Utils.searchTerms;
+
 List<String> favorite = [];
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-
+  await Supabase.initialize(
+      url: 'https://xvwluwcyvwuifqlaoovd.supabase.co',
+      anonKey:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2d2x1d2N5dnd1aWZxbGFvb3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MjgzNTIsImV4cCI6MjAzNTAwNDM1Mn0.CDgMmdvrkOsiKnib_VPymR4AKjsDdnXlzTF7-28b2jU');
 
   runApp(
     MaterialApp(
@@ -39,7 +44,6 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _checkLoginStatus();
   }
-
 
   void _checkLoginStatus() async {
     final GlobalKey<_SplashScreenState> myWidgetKey = GlobalKey();
@@ -78,7 +82,6 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-
   final _formKey = GlobalKey<FormState>();
   TextEditingController idController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -89,13 +92,6 @@ class _LoginState extends State<Login> {
   var idFocusBorder = BorderSide(color: Colors.blue, width: 2.0);
   var passwordFocusBorder = BorderSide(color: Colors.blue, width: 2.0);
 
-  // Predefined user IDs and passwords
-  final Map<String, String> users = {
-    'user1': 'password1',
-    'user2': 'password2',
-    'admin': 'admin123',
-  };
-
   @override
   void dispose() {
     idController.dispose();
@@ -105,25 +101,29 @@ class _LoginState extends State<Login> {
 
   void _validateFields() async {
     setState(() {
-      _idLabelColor = idFocusBorder.color == Colors.red && _idLabelColor == Colors.red ? Colors.red : Colors.blue;
-      _passwordLabelColor = passwordFocusBorder.color == Colors.red && _idLabelColor == Colors.red ? Colors.red : Colors.blue;
+      _idLabelColor =
+      idFocusBorder.color == Colors.red && _idLabelColor == Colors.red
+          ? Colors.red
+          : Colors.blue;
+      _passwordLabelColor =
+      passwordFocusBorder.color == Colors.red && _idLabelColor == Colors.red
+          ? Colors.red
+          : Colors.blue;
     });
-
-
-    WidgetsFlutterBinding.ensureInitialized();
-
-    await Supabase.initialize(url: 'https://xvwluwcyvwuifqlaoovd.supabase.co',
-        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2d2x1d2N5dnd1aWZxbGFvb3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MjgzNTIsImV4cCI6MjAzNTAwNDM1Mn0.CDgMmdvrkOsiKnib_VPymR4AKjs;DdnXlzTF7-28b2jU'
-    );
-
-    final user_info = await Supabase.instance.client.from('user_information').select();
-    
 
     if (_formKey.currentState!.validate()) {
       String id = idController.text;
       String password = passwordController.text;
 
-      if (users.containsKey(id) && users[id] == password) {
+      final userInfo = await Supabase.instance.client
+          .from('user_information')
+          .select()
+          .eq("id", id)
+          .single();
+      final userInputId = userInfo[id].toString();
+      final userInputPassword = userInfo[password].toString();
+
+      if (userInputId.isNotEmpty && userInputPassword.isNotEmpty) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
 
@@ -157,7 +157,8 @@ class _LoginState extends State<Login> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: TextFormField(
                   controller: idController,
                   decoration: InputDecoration(
@@ -189,7 +190,8 @@ class _LoginState extends State<Login> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: TextFormField(
                   controller: passwordController,
                   obscureText: true,
@@ -213,7 +215,6 @@ class _LoginState extends State<Login> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       setState(() {
-
                         _passwordLabelColor = Colors.red;
                       });
                       return 'Please enter your password';
@@ -225,7 +226,8 @@ class _LoginState extends State<Login> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: Center(
                   child: ElevatedButton(
                     onPressed: _validateFields,
@@ -241,7 +243,8 @@ class _LoginState extends State<Login> {
   }
 
   void _selectAllText(TextEditingController controller) {
-    controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.text.length);
+    controller.selection =
+        TextSelection(baseOffset: 0, extentOffset: controller.text.length);
   }
 }
 
@@ -255,47 +258,53 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.menu, size: 35),
-              tooltip: '메뉴화면',
-              onPressed: () {
-                Navigator.pushNamed(context, '/menu');
-              },
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.settings, size: 35),
-                tooltip: '세팅 화면',
+      home: Container(
+        color: Colors.white, // Set the background color to white
+        child: SafeArea(
+          child: Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.menu, size: 35),
+                tooltip: '메뉴화면',
                 onPressed: () {
-                  Navigator.pushNamed(context, '/setting');
+                  Navigator.pushNamed(context, '/menu');
                 },
               ),
-            ],
-            flexibleSpace: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.settings, size: 35),
+                  tooltip: '세팅 화면',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/setting');
+                  },
+                ),
+              ],
+              flexibleSpace: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: loadImage('assets/logo.jpg'),
+                  )
+                ],
+              ),
+            ),
+            body: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(top: 30),
-                  child: loadImage('assets/logo.jpg'),
+                  padding: const EdgeInsets.all(10.0),
+                  child: searchBarDesign(context),
+                ),
+                Container(
+                  alignment: Alignment.center,
                 )
               ],
             ),
           ),
-          body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: searchBarDesign(context),
-              ),
-              Container(
-                alignment: Alignment.center,
-              )
-            ],
-          )),
+        ),
+      ),
     );
   }
 }
@@ -553,7 +562,7 @@ class EachSubCategoryPage extends StatefulWidget {
 
   EachSubCategoryPage({required this.clickedSubCategory});
 
-  @override
+  @override // sdfdd
   State<EachSubCategoryPage> createState() => _EachSubCategoryPageState();
 }
 
@@ -575,108 +584,113 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.clickedSubCategory.split(' ')[0]),
-          centerTitle: true,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    addedToFavorite = !addedToFavorite;
-                  });
-                  if (addedToFavorite == true) {
-                    favorite.add(widget.clickedSubCategory);
-                    debugPrint('added to list');
-                  } else {
-                    favorite.remove(widget.clickedSubCategory);
-                    debugPrint('removed from list');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
+    return Container(
+      color: Colors.white, // Set the background color to white
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(widget.clickedSubCategory.split(' ')[0]),
+            centerTitle: true,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      addedToFavorite = !addedToFavorite;
+                    });
+                    if (addedToFavorite == true) {
+                      favorite.add(widget.clickedSubCategory);
+                      debugPrint('added to list');
+                    } else {
+                      favorite.remove(widget.clickedSubCategory);
+                      debugPrint('removed from list');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
                     iconColor: Colors.blue,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(3))),
-                child: Icon((addedToFavorite == true)
-                    ? Icons.favorite
-                    : Icons.favorite_outline),
-              ),
-            )
-          ],
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ListView(
-            children: filteredErrorSolutionList.map((item) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Table(
-                      border: TableBorder.all(),
-                      children: [
-                        TableRow(children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'Error',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'Solution',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ]),
-                        TableRow(children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child:
-                            Text(getStringAfterFirstSpace(item["error"]!)),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(item["solution"]!),
-                          ),
-                        ]),
-                      ],
+                      borderRadius: BorderRadius.circular(3),
                     ),
-                    SizedBox(height: 10),
-                    if (item["videoUrl"]!.isNotEmpty)
-                      SizedBox(
-                        width: double
-                            .infinity, // Make the container as wide as the parent
-                        child: TextButton(
-                          onPressed: () {
-                            final uri = Uri.parse(item["videoUrl"]!);
-                            _launchURL(uri);
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 16.0), // Add vertical padding
-                            backgroundColor:
-                            Colors.blue, // Set button background color
-                          ),
-                          child: Text(
-                            'Watch Video',
-                            style: TextStyle(
-                              color: Colors.white, // Set text color
-                              fontSize: 16.0, // Set text size
+                  ),
+                  child: Icon((addedToFavorite == true)
+                      ? Icons.favorite
+                      : Icons.favorite_outline),
+                ),
+              )
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ListView(
+              children: filteredErrorSolutionList.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Table(
+                        border: TableBorder.all(),
+                        children: [
+                          TableRow(children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Error',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Solution',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ]),
+                          TableRow(children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                  getStringAfterFirstSpace(item["error"]!)),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(item["solution"]!),
+                            ),
+                          ]),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      if (item["videoUrl"]!.isNotEmpty)
+                        SizedBox(
+                          width: double
+                              .infinity, // Make the container as wide as the parent
+                          child: TextButton(
+                            onPressed: () {
+                              final uri = Uri.parse(item["videoUrl"]!);
+                              _launchURL(uri);
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 16.0), // Add vertical padding
+                              backgroundColor:
+                              Colors.blue, // Set button background color
+                            ),
+                            child: Text(
+                              'Watch Video',
+                              style: TextStyle(
+                                color: Colors.white, // Set text color
+                                fontSize: 16.0, // Set text size
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              );
-            }).toList(),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
@@ -693,6 +707,7 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
 }
 
 String getStringAfterFirstSpace(String key) {
+  // code for each sub-categories, it will skip the first string ex: ZT411
   String value = key;
 
   //split the string by spaces
