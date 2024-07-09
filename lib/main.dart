@@ -7,19 +7,20 @@ import 'utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'chat.dart';
+
 var categories = Utils.getMockedCategories();
 var searchTerms = Utils.searchTerms;
-
 List<String> favorite = [];
-
-
+late final String userInputId;
+late final String userInputPassword;
+final supabase = Supabase.instance.client;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
       url: 'https://xvwluwcyvwuifqlaoovd.supabase.co',
       anonKey:
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2d2x1d2N5dnd1aWZxbGFvb3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MjgzNTIsImV4cCI6MjAzNTAwNDM1Mn0.CDgMmdvrkOsiKnib_VPymR4AKjsDdnXlzTF7-28b2jU');
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2d2x1d2N5dnd1aWZxbGFvb3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MjgzNTIsImV4cCI6MjAzNTAwNDM1Mn0.CDgMmdvrkOsiKnib_VPymR4AKjsDdnXlzTF7-28b2jU');
 
   runApp(
     MaterialApp(
@@ -103,13 +104,13 @@ class _LoginState extends State<Login> {
   void _validateFields() async {
     setState(() {
       _idLabelColor =
-      idFocusBorder.color == Colors.red && _idLabelColor == Colors.red
-          ? Colors.red
-          : Colors.blue;
+          idFocusBorder.color == Colors.red && _idLabelColor == Colors.red
+              ? Colors.red
+              : Colors.blue;
       _passwordLabelColor =
-      passwordFocusBorder.color == Colors.red && _idLabelColor == Colors.red
-          ? Colors.red
-          : Colors.blue;
+          passwordFocusBorder.color == Colors.red && _idLabelColor == Colors.red
+              ? Colors.red
+              : Colors.blue;
     });
 
     if (_formKey.currentState!.validate()) {
@@ -121,8 +122,8 @@ class _LoginState extends State<Login> {
           .select()
           .eq("id", id)
           .single();
-      final userInputId = userInfo[id].toString();
-      final userInputPassword = userInfo[password].toString();
+      userInputId = userInfo[id].toString();
+      userInputPassword = userInfo[password].toString();
 
       if (userInputId.isNotEmpty && userInputPassword.isNotEmpty) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -159,7 +160,7 @@ class _LoginState extends State<Login> {
             children: [
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: TextFormField(
                   controller: idController,
                   decoration: InputDecoration(
@@ -192,7 +193,7 @@ class _LoginState extends State<Login> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: TextFormField(
                   controller: passwordController,
                   obscureText: true,
@@ -228,7 +229,7 @@ class _LoginState extends State<Login> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: Center(
                   child: ElevatedButton(
                     onPressed: _validateFields,
@@ -292,16 +293,20 @@ class _MainPageState extends State<MainPage> {
                 ],
               ),
             ),
-            body: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: searchBarDesign(context),
-                ),
-                Expanded(
-                  child: ChatPage(),
-                )
-              ],
+            body: Scaffold(
+              body: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Center(
+                      child: searchBarDesign(context),
+                    ),
+                  ),
+                  Expanded(
+                    child: ChatPage(),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -346,7 +351,7 @@ class CustomSearchDelegate extends SearchDelegate<String> {
     }
 
     final queryWords =
-    query.toLowerCase().split(' ').where((word) => word.isNotEmpty).toSet();
+        query.toLowerCase().split(' ').where((word) => word.isNotEmpty).toSet();
 
     final matchQuery = searchTerms.where((term) {
       final lowerTerm = term.toLowerCase();
@@ -395,9 +400,9 @@ List<TextSpan> _highlightOccurrences(String result, Set<String> queryWords) {
   while (start < result.length) {
     final matches = queryWords
         .map((word) {
-      final index = lowerCaseResult.indexOf(word, start);
-      return index == -1 ? null : MapEntry(index, word.length);
-    })
+          final index = lowerCaseResult.indexOf(word, start);
+          return index == -1 ? null : MapEntry(index, word.length);
+        })
         .where((entry) => entry != null)
         .cast<MapEntry<int, int>>()
         .toList();
@@ -534,7 +539,7 @@ class _EachCategoryViewState extends State<EachCategoryView> {
                       MaterialPageRoute(
                         builder: (context) => EachSubCategoryPage(
                           clickedSubCategory:
-                          categories[mainIndex].subCategories[index],
+                              categories[mainIndex].subCategories[index],
                         ),
                       ),
                     );
@@ -563,7 +568,7 @@ class EachSubCategoryPage extends StatefulWidget {
 
   EachSubCategoryPage({required this.clickedSubCategory});
 
-  @override // sdfdd
+  @override
   State<EachSubCategoryPage> createState() => _EachSubCategoryPageState();
 }
 
@@ -574,7 +579,7 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
   void initState() {
     super.initState();
     int index = categories.indexWhere(
-            (item) => item.subCategories.contains(widget.clickedSubCategory));
+        (item) => item.subCategories.contains(widget.clickedSubCategory));
     filteredErrorSolutionList = categories[index]
         .troubleShootDescribe!
         .where((item) => item["error"] == widget.clickedSubCategory)
@@ -676,7 +681,7 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
                               padding: EdgeInsets.symmetric(
                                   vertical: 16.0), // Add vertical padding
                               backgroundColor:
-                              Colors.blue, // Set button background color
+                                  Colors.blue, // Set button background color
                             ),
                             child: Text(
                               'Watch Video',
