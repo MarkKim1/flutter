@@ -11,8 +11,8 @@ import 'chat.dart';
 var categories = Utils.getMockedCategories();
 var searchTerms = Utils.searchTerms;
 List<String> favorite = [];
-late final String userInputId;
-late final String userInputPassword;
+ late final String userInputId;
+ late final String userInputPassword;
 final supabase = Supabase.instance.client;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
