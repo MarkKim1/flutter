@@ -11,9 +11,8 @@ class EachCategoryTemplate extends StatefulWidget {
 
   EachCategoryTemplate(
       {required this.name,
-        //required this.imgName,
-        required this.describe
-      });
+      //required this.imgName,
+      required this.describe});
 
   @override
   State<EachCategoryTemplate> createState() => _EachCategoryTemplateState();
@@ -25,13 +24,11 @@ class _EachCategoryTemplateState extends State<EachCategoryTemplate> {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EachCategoryView(
-              categoryName: widget.name,
-            )
-          )
-        );
+            context,
+            MaterialPageRoute(
+                builder: (context) => EachCategoryView(
+                      categoryName: widget.name,
+                    )));
       },
       child: Container(
         margin: EdgeInsets.all(20),
@@ -40,9 +37,8 @@ class _EachCategoryTemplateState extends State<EachCategoryTemplate> {
           children: [
             Positioned.fill(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: loadImage('assets/${widget.name}.png')
-              ),
+                  borderRadius: BorderRadius.circular(20),
+                  child: loadImage('assets/${widget.name}.png')),
             ),
             Positioned(
               bottom: 0,
@@ -65,7 +61,9 @@ class _EachCategoryTemplateState extends State<EachCategoryTemplate> {
             ),
             Row(
               children: [
-                CategoryName(name: widget.describe), // shows the name of the each Category on picture
+                CategoryName(
+                    name: widget
+                        .describe), // shows the name of the each Category on picture
               ],
             ),
           ],

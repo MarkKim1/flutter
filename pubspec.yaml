@@ -17,12 +17,15 @@ dependencies:
   provider: ^6.0.0
   supabase_flutter: ^2.5.6
   timeago: ^3.1.0
+  photo_view: ^0.15.0
+
+
 
 
 dev_dependencies:
+  flutter_launcher_icons: "^0.13.1"
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^4.0.0
 
 flutter:
@@ -33,3 +36,17 @@ flutter:
       - assets/ZT410.png
       - assets/ZT411.png
       - assets/logo.jpg
+      - assets/Computer.png
+      - assets/MES.png
+      - assets/Scanner.png
+      - assets/comport1.png
+      - assets/comport2.png
+      - assets/comport3.png
+      - assets/MESfreeze01.png
+      - assets/MESfreeze02.png
+      - assets/MESfreeze03.png
+      - assets/MESfreeze04.png
+      - assets/MESfreezewin1101.png
+      - assets/MESfreezewin1102.png
+      - assets/MESfreezewin1103.png
+      - assets/icon.png

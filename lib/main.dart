@@ -6,14 +6,16 @@ import 'EachCategoryTemplate.dart';
 import 'utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'chat.dart';
+import 'favoritePage.dart';
+import 'fullScreenImage.dart';
 
 var categories = Utils.getMockedCategories();
 var searchTerms = Utils.searchTerms;
 List<String> favorite = [];
- late final String userInputId;
- late final String userInputPassword;
+String fetchedIdOutside = "";
+String fetchedPasswordOutside = "";
 final supabase = Supabase.instance.client;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -28,8 +30,8 @@ void main() async {
       initialRoute: '/',
       routes: {
         '/': (context) => Login(),
-        '/setting': (context) => SettingPage(),
         '/menu': (context) => MenuPage(),
+        '/favoritePage' : (context) => favoritePage(),
       },
     ),
   );
@@ -87,12 +89,30 @@ class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController idController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  bool rememberId = false;
 
   Color _idLabelColor = Colors.grey;
   Color _passwordLabelColor = Colors.grey;
 
   var idFocusBorder = BorderSide(color: Colors.blue, width: 2.0);
   var passwordFocusBorder = BorderSide(color: Colors.blue, width: 2.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedId();
+  }
+
+  void _loadRememberedId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedId = prefs.getString('rememberedId');
+    if (savedId != null) {
+      setState(() {
+        idController.text = savedId;
+        rememberId = true;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -116,26 +136,42 @@ class _LoginState extends State<Login> {
     if (_formKey.currentState!.validate()) {
       String id = idController.text;
       String password = passwordController.text;
+      var userInfo;
+      try {
+        userInfo = await Supabase.instance.client
+            .from('user_information')
+            .select()
+            .eq("id", id)
+            .single();
 
-      final userInfo = await Supabase.instance.client
-          .from('user_information')
-          .select()
-          .eq("id", id)
-          .single();
-      userInputId = userInfo[id].toString();
-      userInputPassword = userInfo[password].toString();
+        final fetchedId = userInfo['id'].toString();
+        final fetchedPassword = userInfo['password'].toString();
+          fetchedIdOutside = fetchedId;
+          fetchedPasswordOutside = fetchedPassword;
+        if (password == fetchedPassword) {
 
-      if (userInputId.isNotEmpty && userInputPassword.isNotEmpty) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isLoggedIn', true);
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MainPage()),
-        );
-      } else {
+          if (rememberId) {
+            await prefs.setString('rememberedId', id);
+          } else {
+            await prefs.remove('rememberedId');
+          }
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MainPage()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid ID or Password')),
+          );
+        }
+      } catch (error) {
+        print(error);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid ID or Password')),
+          const SnackBar(content: Text('DB error')),
         );
       }
     } else {
@@ -148,96 +184,139 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login Page'),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: SafeArea(
+          child: AppBar(
+            backgroundColor: Colors.white,
+            flexibleSpace: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: loadImage('assets/logo.jpg'),
+                )
+              ],
+            ),
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: TextFormField(
-                  controller: idController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+      body: SafeArea(
+        child: Container(
+          color: Colors.white,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: TextFormField(
+                      controller: idController,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.grey, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: idFocusBorder,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.grey, width: 1.0),
+                        ),
+                        labelText: "ID",
+                        labelStyle: TextStyle(color: Colors.grey),
+                        floatingLabelStyle: TextStyle(color: _idLabelColor),
+                      ),
+                      style:
+                          TextStyle(color: Colors.black), // Default text color
+                      onTap: () => _selectAllText(idController),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          setState(() {
+                            _idLabelColor = Colors.red;
+                          });
+                          return 'Please enter your ID';
+                        }
+                        return null;
+                      },
+                      cursorColor: Colors.blue,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: idFocusBorder,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                    ),
-                    labelText: "ID",
-                    labelStyle: TextStyle(color: Colors.grey),
-                    floatingLabelStyle: TextStyle(color: _idLabelColor),
                   ),
-                  style: TextStyle(color: Colors.black), // Default text color
-                  onTap: () => _selectAllText(idController),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      setState(() {
-                        _idLabelColor = Colors.red;
-                      });
-                      return 'Please enter your ID';
-                    }
-                    return null;
-                  },
-                  cursorColor: Colors.blue,
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.grey, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: passwordFocusBorder,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.grey, width: 1.0),
+                        ),
+                        labelText: "Password",
+                        labelStyle: TextStyle(color: Colors.grey),
+                        floatingLabelStyle:
+                            TextStyle(color: _passwordLabelColor),
+                      ),
+                      style:
+                          TextStyle(color: Colors.black), // Default text color
+                      onTap: () => _selectAllText(passwordController),
+                      onFieldSubmitted: (value) => _validateFields(),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          setState(() {
+                            _passwordLabelColor = Colors.red;
+                          });
+                          return 'Please enter your password';
+                        }
+                        return null;
+                      },
+                      cursorColor: Colors.blue, // Cursor color
+                      //onFieldSubmitted: (value) => _validateFields,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: passwordFocusBorder,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                    ),
-                    labelText: "Password",
-                    labelStyle: TextStyle(color: Colors.grey),
-                    floatingLabelStyle: TextStyle(color: _passwordLabelColor),
                   ),
-                  style: TextStyle(color: Colors.black), // Default text color
-                  onTap: () => _selectAllText(passwordController),
-                  onFieldSubmitted: (value) => _validateFields(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      setState(() {
-                        _passwordLabelColor = Colors.red;
-                      });
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                  cursorColor: Colors.blue, // Cursor color
-                  //onFieldSubmitted: (value) => _validateFields,
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: Center(
-                  child: ElevatedButton(
-                    onPressed: _validateFields,
-                    child: const Text('Submit'),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: rememberId,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              rememberId = value ?? false;
+                            });
+                          },
+                        ),
+                        const Text('Remember ID'),
+                      ],
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: Center(
+                      child: ElevatedButton(
+                        onPressed: _validateFields,
+                        child: const Text('Submit'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -267,7 +346,8 @@ class _MainPageState extends State<MainPage> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               centerTitle: true,
-              leading: IconButton(
+              leading:
+              IconButton(
                 icon: Icon(Icons.menu, size: 35),
                 tooltip: '메뉴화면',
                 onPressed: () {
@@ -276,12 +356,28 @@ class _MainPageState extends State<MainPage> {
               ),
               actions: [
                 IconButton(
-                  icon: Icon(Icons.settings, size: 35),
-                  tooltip: '세팅 화면',
+                  icon: Icon(
+                    Icons.logout,
+                    size: 35,
+                  ),
+                  tooltip: '로그아웃',
                   onPressed: () {
-                    Navigator.pushNamed(context, '/setting');
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Login()),
+                    );
                   },
                 ),
+                IconButton(
+                  icon: Icon(
+                    Icons.favorite,
+                    size: 35,
+                  ),
+                  tooltip: 'added favorites',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/favoritePage');
+                  },
+                )
               ],
               flexibleSpace: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -302,9 +398,6 @@ class _MainPageState extends State<MainPage> {
                       child: searchBarDesign(context),
                     ),
                   ),
-                  Expanded(
-                    child: ChatPage(),
-                  ),
                 ],
               ),
             ),
@@ -314,6 +407,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
+
 
 class CustomSearchDelegate extends SearchDelegate<String> {
   @override
@@ -478,7 +572,6 @@ class _MenuPageState extends State<MenuPage> {
               itemBuilder: (BuildContext ctx, int index) {
                 return EachCategoryTemplate(
                   name: categories[index].name,
-                  //imgName: categories[index].imgName,
                   describe: categories[index].describe,
                 );
               },
@@ -514,6 +607,20 @@ class _EachCategoryViewState extends State<EachCategoryView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(categories[mainIndex].describe),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.home),
+            iconSize: 35,
+            tooltip: 'Go to main page',
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => MainPage()), // Replace with your main page widget
+                    (Route<dynamic> route) => false,
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -569,11 +676,12 @@ class EachSubCategoryPage extends StatefulWidget {
   EachSubCategoryPage({required this.clickedSubCategory});
 
   @override
-  State<EachSubCategoryPage> createState() => _EachSubCategoryPageState();
+  _EachSubCategoryPageState createState() => _EachSubCategoryPageState();
 }
 
 class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
-  late List<Map<String, String>> filteredErrorSolutionList;
+  late List<Map<String, dynamic>> filteredErrorSolutionList;
+  bool addedToFavorite = false;
 
   @override
   void initState() {
@@ -582,11 +690,10 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
         (item) => item.subCategories.contains(widget.clickedSubCategory));
     filteredErrorSolutionList = categories[index]
         .troubleShootDescribe!
-        .where((item) => item["error"] == widget.clickedSubCategory)
+        .where((item) => item['error'] == widget.clickedSubCategory)
         .toList();
+    _checkFavoriteStatus();
   }
-
-  bool addedToFavorite = false;
 
   @override
   Widget build(BuildContext context) {
@@ -596,21 +703,24 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(widget.clickedSubCategory.split(' ')[0]),
+            leading: BackButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
             centerTitle: true,
             actions: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     setState(() {
                       addedToFavorite = !addedToFavorite;
                     });
                     if (addedToFavorite == true) {
-                      favorite.add(widget.clickedSubCategory);
-                      debugPrint('added to list');
+                      await addFavorite();
                     } else {
-                      favorite.remove(widget.clickedSubCategory);
-                      debugPrint('removed from list');
+                      await removeFavorite();
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -635,59 +745,124 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Table(
-                        border: TableBorder.all(),
-                        children: [
-                          TableRow(children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Error',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                      // First row showing the error
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Table(
+                          border: TableBorder.all(),
+                          children: [
+                            TableRow(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Error',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 25),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Solution',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                            TableRow(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(item['error']),
+                                ),
+                              ],
                             ),
-                          ]),
-                          TableRow(children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                  getStringAfterFirstSpace(item["error"]!)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(item["solution"]!),
-                            ),
-                          ]),
-                        ],
+                          ],
+                        ),
                       ),
+                      // Subsequent rows showing image and solution
+                      ...item['solutions'].asMap().entries.map<Widget>((entry) {
+                        int index = entry.key;
+                        Map<String, dynamic> solution = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Step ${index + 1}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 25,
+                                ),
+                              ),
+                              if (solution['image'] != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      _openFullScreenImageView(
+                                        item['solutions']
+                                            .map<String>((solution) => solution['image'] as String)
+                                            .toList(),
+                                        index,
+                                      );
+                                    },
+                                    child: Center(
+                                      child: Image.asset(
+                                        solution['image'],
+                                        height: 300,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding:
+                                      const EdgeInsets.only(right: 8.0),
+                                    ),
+                                    Expanded(
+                                      child: Table(
+                                        border: TableBorder.all(),
+                                        children: [
+                                          TableRow(
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                const EdgeInsets.all(8.0),
+                                                child:
+                                                Text(solution['solution']),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                       SizedBox(height: 10),
-                      if (item["videoUrl"]!.isNotEmpty)
+                      if (item['videoUrl'] != null &&
+                          item['videoUrl']!.isNotEmpty)
                         SizedBox(
-                          width: double
-                              .infinity, // Make the container as wide as the parent
+                          width: double.infinity,
                           child: TextButton(
                             onPressed: () {
-                              final uri = Uri.parse(item["videoUrl"]!);
+                              final uri = Uri.parse(item['videoUrl']);
                               _launchURL(uri);
                             },
                             style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 16.0), // Add vertical padding
-                              backgroundColor:
-                                  Colors.blue, // Set button background color
+                              padding: EdgeInsets.symmetric(vertical: 16.0),
+                              backgroundColor: Colors.blue,
                             ),
                             child: Text(
                               'Watch Video',
                               style: TextStyle(
-                                color: Colors.white, // Set text color
-                                fontSize: 16.0, // Set text size
+                                color: Colors.white,
+                                fontSize: 16.0,
                               ),
                             ),
                           ),
@@ -701,6 +876,60 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
         ),
       ),
     );
+  }
+
+  void _openFullScreenImageView(List<String> images, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullScreenImageView(
+          images: images,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+
+  Future<void> addFavorite() async {
+    try {
+      await supabase.from('favorite').insert({
+        'id': fetchedIdOutside.toString(),
+        'clicked_sub_category': widget.clickedSubCategory.toString(),
+      });
+      print('added');
+    } on PostgrestException catch (error) {
+      debugPrint('Error inserting into favorite: $error');
+    }
+  }
+
+  Future<void> removeFavorite() async {
+    try {
+      await supabase
+          .from('favorite')
+          .delete()
+          .eq('id', fetchedIdOutside)
+          .eq('clicked_sub_category', widget.clickedSubCategory);
+    } on PostgrestException catch (error) {
+      debugPrint('Error deleting from favorite: $error');
+    }
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final supabase = Supabase.instance.client;
+    try {
+      final response = await supabase
+          .from('favorite')
+          .select()
+          .eq('id', fetchedIdOutside)
+          .eq('clicked_sub_category', widget.clickedSubCategory);
+      if (response.isNotEmpty) {
+        setState(() {
+          addedToFavorite = true;
+        });
+      }
+    } on PostgrestException catch (error) {
+      debugPrint('Error: $error');
+    }
   }
 
   void _launchURL(Uri url) async {
