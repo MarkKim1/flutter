@@ -9,9 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'favoritePage.dart';
 import 'fullScreenImage.dart';
 
-var categories = Utils.getMockedCategories();
-var searchTerms = Utils.searchTerms;
-List<String> favorite = [];
+var categories;
+var searchTerms;
 String fetchedIdOutside = "";
 String fetchedPasswordOutside = "";
 final supabase = Supabase.instance.client;
@@ -31,9 +30,16 @@ void main() async {
       routes: {
         '/': (context) => Login(),
         '/menu': (context) => MenuPage(),
-        '/favoritePage' : (context) => favoritePage(),
+        '/favoritePage': (context) => favoritePage(),
       },
     ),
+  );
+}
+
+Widget loadImage(String path) {
+  return Image.asset(
+    path,
+    fit: BoxFit.cover, // This makes the image cover the available space
   );
 }
 
@@ -144,12 +150,17 @@ class _LoginState extends State<Login> {
             .eq("id", id)
             .single();
 
-        final fetchedId = userInfo['id'].toString();
-        final fetchedPassword = userInfo['password'].toString();
-          fetchedIdOutside = fetchedId;
-          fetchedPasswordOutside = fetchedPassword;
-        if (password == fetchedPassword) {
+        var searchTermPreLoad =
+            await supabase.from('utils').select('error').order('error');
+        if(searchTermPreLoad.isNotEmpty){
+          searchTerms = searchTermPreLoad.map((error) => error['error'] as String).toList();
+        }
 
+        final fetchedId = userInfo['id'].toString().toUpperCase();
+        final fetchedPassword = userInfo['password'].toString().toUpperCase();
+        fetchedIdOutside = fetchedId;
+        fetchedPasswordOutside = fetchedPassword;
+        if (password == fetchedPassword) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn', true);
 
@@ -346,8 +357,7 @@ class _MainPageState extends State<MainPage> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               centerTitle: true,
-              leading:
-              IconButton(
+              leading: IconButton(
                 icon: Icon(Icons.menu, size: 35),
                 tooltip: '메뉴화면',
                 onPressed: () {
@@ -389,17 +399,96 @@ class _MainPageState extends State<MainPage> {
                 ],
               ),
             ),
-            body: Scaffold(
-              body: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Center(
-                      child: searchBarDesign(context),
+            body: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Center(
+                    child: searchBarDesign(context),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10.0),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: Offset(0, 3)),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Name: Minseok Kim',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Email: kim970602@gmail.com',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          'Number: (334) 471 - 9314',
+                          style: TextStyle(fontSize: 16),
+                        )
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10.0),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: Offset(0, 3)),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Name: Nojeong Woong',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Email: jeongwoong@seoyoneh.us',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          'Number: (513) 910 - 2206',
+                          style: TextStyle(fontSize: 16),
+                        )
+                      ],
+                    ),
+                  ),
+                )
+              ],
             ),
           ),
         ),
@@ -407,7 +496,6 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
-
 
 class CustomSearchDelegate extends SearchDelegate<String> {
   @override
@@ -479,12 +567,6 @@ class CustomSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-/*
-  The TextSpan widget in flutter allows you to style a paragraph of mixed-style text.
-  It displays text that uses multiple styles. The Text may break across multiple lines or might appear
-  all on the same line depending on layout constraints
-*/
-
 List<TextSpan> _highlightOccurrences(String result, Set<String> queryWords) {
   final spans = <TextSpan>[];
   final lowerCaseResult = result.toLowerCase();
@@ -550,6 +632,19 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
+  var categories1;
+
+  @override
+  void initState() {
+    super.initState();
+    _callManu();
+  }
+
+  Future<void> _callManu() async {
+    categories1 = await supabase.rpc('get_menu');
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -567,15 +662,19 @@ class _MenuPageState extends State<MenuPage> {
             child: searchBarDesign(context),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: categories.length,
-              itemBuilder: (BuildContext ctx, int index) {
-                return EachCategoryTemplate(
-                  name: categories[index].name,
-                  describe: categories[index].describe,
-                );
-              },
-            ),
+            child: categories1 == null
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : ListView.builder(
+                    itemCount: categories1.length,
+                    itemBuilder: (BuildContext ctx, int index) {
+                      return EachCategoryTemplate(
+                        name: categories1[index]['name'],
+                        describe: categories1[index]['describe'],
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -593,20 +692,30 @@ class EachCategoryView extends StatefulWidget {
 }
 
 class _EachCategoryViewState extends State<EachCategoryView> {
-  late int mainIndex;
-
+  var eachMenu;
   @override
   void initState() {
     super.initState();
-    mainIndex =
-        categories.indexWhere((item) => item.name == widget.categoryName);
+    _callEachMenu();
+  }
+
+  Future<void> _callEachMenu() async {
+    try {
+      eachMenu = await supabase
+          .rpc('get_eachmenu', params: {'error_input': widget.categoryName});
+    } on PostgrestException catch (error) {
+      SnackBar(
+        content: Text(error.message),
+      );
+    }
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(categories[mainIndex].describe),
+        title: Text('${widget.categoryName} Trouble Shoot'),
         actions: [
           IconButton(
             icon: Icon(Icons.home),
@@ -615,8 +724,10 @@ class _EachCategoryViewState extends State<EachCategoryView> {
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => MainPage()), // Replace with your main page widget
-                    (Route<dynamic> route) => false,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        MainPage()), // Replace with your main page widget
+                (Route<dynamic> route) => false,
               );
             },
           ),
@@ -630,39 +741,43 @@ class _EachCategoryViewState extends State<EachCategoryView> {
             child: searchBarDesign(context),
           ),
           Expanded(
-            child: ListView.separated(
-              itemCount: categories[mainIndex].subCategories.length,
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  leading: const Icon(Icons.list),
-                  title: Text(
-                    getStringAfterFirstSpace(
-                        categories[mainIndex].subCategories[index]),
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EachSubCategoryPage(
-                          clickedSubCategory:
-                              categories[mainIndex].subCategories[index],
+            child: eachMenu == null
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : ListView.separated(
+                    itemCount: eachMenu.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        leading: const Icon(Icons.list),
+                        title: Text(
+                          getStringAfterFirstSpace(
+                              eachMenu[index]['error'].toString()),
+                          style: TextStyle(fontSize: 20),
                         ),
-                      ),
-                    );
-                  },
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) {
-                return Divider(
-                  height: 20,
-                  thickness: 2,
-                  color: Colors.blue,
-                  indent: 16,
-                  endIndent: 16,
-                );
-              },
-            ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EachSubCategoryPage(
+                                clickedSubCategory:
+                                    eachMenu[index]['error'].toString(),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    separatorBuilder: (BuildContext context, int index) {
+                      return Divider(
+                        height: 20,
+                        thickness: 2,
+                        color: Colors.blue,
+                        indent: 16,
+                        endIndent: 16,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -680,25 +795,46 @@ class EachSubCategoryPage extends StatefulWidget {
 }
 
 class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
-  late List<Map<String, dynamic>> filteredErrorSolutionList;
+  List<Map<String, dynamic>> filteredErrorSolutionList = [];
   bool addedToFavorite = false;
+  var eachCategoryView;
 
   @override
   void initState() {
     super.initState();
-    int index = categories.indexWhere(
-        (item) => item.subCategories.contains(widget.clickedSubCategory));
-    filteredErrorSolutionList = categories[index]
-        .troubleShootDescribe!
-        .where((item) => item['error'] == widget.clickedSubCategory)
-        .toList();
     _checkFavoriteStatus();
+    _callClickedSubcategory();
+  }
+
+  Future<void> _callClickedSubcategory() async {
+    try {
+      eachCategoryView = await supabase.rpc('clicked_category', params: {
+        'input': widget.clickedSubCategory,
+      });
+      if (eachCategoryView != null) {
+        for (int i = 0; i < eachCategoryView.length; i++) {
+          filteredErrorSolutionList.add({
+            'id': eachCategoryView[i]['id'],
+            'error': eachCategoryView[i]['error'],
+            'solution': eachCategoryView[i]['solution'],
+            'image': eachCategoryView[i]['image'],
+            'videourl': eachCategoryView[i]['videourl']
+          });
+        }
+      }
+    } on PostgrestException catch (error) {
+      debugPrint(error.message);
+    }
+    setState(() {});
+    print(widget.clickedSubCategory);
+    print('eachCategoryView:$eachCategoryView');
+    print('filteredErrorSolutionList $filteredErrorSolutionList');
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white, // Set the background color to white
+      color: Colors.white,
       child: SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -717,19 +853,18 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
                     setState(() {
                       addedToFavorite = !addedToFavorite;
                     });
-                    if (addedToFavorite == true) {
+                    if (addedToFavorite) {
                       await addFavorite();
                     } else {
                       await removeFavorite();
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    iconColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                  child: Icon((addedToFavorite == true)
+                      iconColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(3),
+                      )),
+                  child: Icon(addedToFavorite
                       ? Icons.favorite
                       : Icons.favorite_outline),
                 ),
@@ -739,138 +874,115 @@ class _EachSubCategoryPageState extends State<EachSubCategoryPage> {
           body: Padding(
             padding: const EdgeInsets.all(16.0),
             child: ListView(
-              children: filteredErrorSolutionList.map((item) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (filteredErrorSolutionList.isNotEmpty)
+                  Table(
+                    border: TableBorder.all(),
                     children: [
-                      // First row showing the error
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Table(
-                          border: TableBorder.all(),
-                          children: [
-                            TableRow(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'Error',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 25),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            TableRow(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(item['error']),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      TableRow(children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Error',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      ]),
+                      TableRow(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(filteredErrorSolutionList[0]['error']),
+                          ),
+                        ],
                       ),
-                      // Subsequent rows showing image and solution
-                      ...item['solutions'].asMap().entries.map<Widget>((entry) {
-                        int index = entry.key;
-                        Map<String, dynamic> solution = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Step ${index + 1}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 25,
-                                ),
-                              ),
-                              if (solution['image'] != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      _openFullScreenImageView(
-                                        item['solutions']
-                                            .map<String>((solution) => solution['image'] as String)
-                                            .toList(),
-                                        index,
-                                      );
-                                    },
-                                    child: Center(
-                                      child: Image.asset(
-                                        solution['image'],
-                                        height: 300,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding:
-                                      const EdgeInsets.only(right: 8.0),
-                                    ),
-                                    Expanded(
-                                      child: Table(
-                                        border: TableBorder.all(),
-                                        children: [
-                                          TableRow(
-                                            children: [
-                                              Padding(
-                                                padding:
-                                                const EdgeInsets.all(8.0),
-                                                child:
-                                                Text(solution['solution']),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      SizedBox(height: 10),
-                      if (item['videoUrl'] != null &&
-                          item['videoUrl']!.isNotEmpty)
-                        SizedBox(
-                          width: double.infinity,
-                          child: TextButton(
-                            onPressed: () {
-                              final uri = Uri.parse(item['videoUrl']);
-                              _launchURL(uri);
-                            },
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 16.0),
-                              backgroundColor: Colors.blue,
-                            ),
-                            child: Text(
-                              'Watch Video',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.0,
-                              ),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
-                );
-              }).toList(),
+                SizedBox(height: 20),
+                ...filteredErrorSolutionList.map((item) {
+                  String solution =
+                      item['solution'] as String; // Ensure this is a String
+                  int step = filteredErrorSolutionList.indexOf(item) +
+                      1; // Adjusting the step count based on the list index
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Table(
+                          border: TableBorder.all(),
+                          children: [
+                            TableRow(children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Step $step',
+                                ), // Correctly display the step
+                              )
+                            ]),
+                            TableRow(children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(solution),
+                              )
+                            ])
+                          ],
+                        ),
+                        if (item.containsKey('image') && item['image'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                _openFullScreenImageView(
+                                    [item['image'] as String],
+                                    0 // only one image is passed, so index is 0
+                                    );
+                              },
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Image.asset(
+                                    item[
+                                        'image'], // Use Image.network if the image is a URL
+                                    height: 300,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                        ),
+                        if (item.containsKey('videourl') &&
+                            item['videourl'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  Uri uri =
+                                      Uri.parse(item['videourl'].toString());
+                                  _launchURL(uri);
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 16.0, horizontal: 16.0),
+                                  backgroundColor: Colors.blue,
+                                ),
+                                child: Text(
+                                  'Watch Video',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
             ),
           ),
         ),

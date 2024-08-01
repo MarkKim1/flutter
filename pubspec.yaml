@@ -18,6 +18,7 @@ dependencies:
   supabase_flutter: ^2.5.6
   timeago: ^3.1.0
   photo_view: ^0.15.0
+  rename_app: ^1.6.1
 
 
 
@@ -31,22 +32,38 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-      - assets/ZT230.png
-      - assets/ZD411.png
-      - assets/ZT410.png
-      - assets/ZT411.png
-      - assets/logo.jpg
-      - assets/Computer.png
-      - assets/MES.png
-      - assets/Scanner.png
-      - assets/comport1.png
-      - assets/comport2.png
-      - assets/comport3.png
-      - assets/MESfreeze01.png
-      - assets/MESfreeze02.png
-      - assets/MESfreeze03.png
-      - assets/MESfreeze04.png
-      - assets/MESfreezewin1101.png
-      - assets/MESfreezewin1102.png
-      - assets/MESfreezewin1103.png
-      - assets/icon.png
+    - assets/ZT230.png
+    - assets/ZD411.png
+    - assets/ZT410.png
+    - assets/ZT411.png
+    - assets/logo.jpg
+    - assets/Computer.png
+    - assets/MES.png
+    - assets/Scanner.png
+    - assets/comport1.png
+    - assets/comport2.png
+    - assets/comport3.png
+    - assets/MESfreeze01.png
+    - assets/MESfreeze02.png
+    - assets/MESfreeze03.png
+    - assets/MESfreeze04.png
+    - assets/MESfreezewin1101.png
+    - assets/MESfreezewin1102.png
+    - assets/MESfreezewin1103.png
+    - assets/icon.png
+    - assets/Precautions.png
+    - assets/plattenroller01.png
+    - assets/plattenroller02.png
+    - assets/plattenroller03.png
+    - assets/scannerlight01.png
+    - assets/scannerlight02.png
+    - assets/scannerinstall01.png
+    - assets/hdmi01.png
+    - assets/hdmi02.png
+    - assets/computerkeyboard01.png
+    - assets/MESprinterpoweroff01.png
+    - assets/MESprinterpoweroff02.png
+    - assets/printerpowercable01.png
+    - assets/hdmishape01.png
+    - assets/ZT411sensor.png
+    - assets/wifiusb.png

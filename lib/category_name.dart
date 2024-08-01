@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'category.dart';
 
 class CategoryName extends StatelessWidget {
   final String name;

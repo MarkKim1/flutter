@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:name_app/main.dart';
 import 'package:name_app/utils.dart';
-import 'category.dart';
 import 'category_name.dart';
 
 class EachCategoryTemplate extends StatefulWidget {
   final String name;
-  //final String imgName;
   final String describe;
 
   EachCategoryTemplate(
       {required this.name,
-      //required this.imgName,
       required this.describe});
 
   @override
