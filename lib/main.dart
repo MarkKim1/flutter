@@ -17,11 +17,10 @@ final supabase = Supabase.instance.client;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Supabase.initialize(
+    await Supabase.initialize(
       url: 'https://xvwluwcyvwuifqlaoovd.supabase.co',
       anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2d2x1d2N5dnd1aWZxbGFvb3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MjgzNTIsImV4cCI6MjAzNTAwNDM1Mn0.CDgMmdvrkOsiKnib_VPymR4AKjsDdnXlzTF7-28b2jU');
+          'asdasdasd';
 
   runApp(
     MaterialApp(
